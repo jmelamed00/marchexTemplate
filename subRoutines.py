@@ -16,7 +16,7 @@ class CustomThread(Thread):
     def run(self):
         self.value = collectEntities(self.header, self.endpoint)
 
-
+# Threads are only used to speed up the process of collecting multiple, large Entities.
 def useThreadsToCollectEntities(header):
     # Capitalization in the Endpoints list must exactly match the capitalization in the API URLs
     Endpoints = ['Groups', 'numbers', 'numberpools', 'GroupOwners', 'GroupTypes', 'billinggroups']
@@ -74,20 +74,17 @@ def collectEntities(header, url='Not Set'):
 
 def processArguments():
     arguments = {}
-    parser = argparse.ArgumentParser(description='Supply Inputs: --token, --key, (optional): --start, --end, --flatten_pools, --campaign')
+    parser = argparse.ArgumentParser(description='Supply Inputs: --token, --key, (optional): --start, --end')
     parser.add_argument('--token', nargs=1)
     parser.add_argument('--key', nargs=1)
     parser.add_argument('--start', nargs='?', default='')
     parser.add_argument('--end', nargs='?', default='')
-    parser.add_argument('--flatpool', nargs=1, default='y')
-    parser.add_argument('--campaign', nargs=1, default='n')
+
     args = parser.parse_args()
     arguments['token'] = args.token[0]
     arguments['key'] = args.key[0]
-    arguments['flatten_pools'] = args.flatpool[0].lower()
-    arguments['campaign'] = args.campaign[0].lower()
 
-    # If no value was passed for start date save De Luca's start date. That should be early enough.
+    # If no value was passed for start date save De Luca's as the "early enough" start date.
     if args.start == '':
         arguments['start'] = datetime.strptime('2008-10-08', '%Y-%m-%d')
     else:
@@ -100,3 +97,14 @@ def processArguments():
         arguments['end'] = datetime.strptime(args.end, '%Y-%m-%d')
     return arguments
 
+
+def getCallDetails(callID, header):
+    url = 'https://edgeapi.marchex.io/marketingedge/v5/api/calls/' + callID
+
+    response = requests.get(url, headers=header)
+    if response.status_code != 200:
+        print('Failed retrieving callID{' + callID + '} Response Status: ' + str(response.status_code))
+        exit()
+    responseText = json.loads(response.text)
+
+    return responseText['results']
