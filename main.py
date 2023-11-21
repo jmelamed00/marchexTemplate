@@ -1,6 +1,6 @@
 from subRoutines import *
 import pandas as pd
-print('Can you see me?')
+
 start_time = str(datetime.today().strftime('%H-%M-%S'))
 args = processArguments()
 header = {'Accept': 'text/plain', 'Content-Type': 'application/json', 'x-organization-token': args['token'], 'subscription-key': args['key']}
@@ -34,18 +34,21 @@ for index, row in inputFile.iterrows():
     poolID = -1
     if dni_type == 'static':
         for number in entities['numbers']:
-            if ctn == number.phone_number:
-                ctnID = number.id
+            if ctn == number['phone_number']:
+                ctnID = number['id']
                 break
     else:
         for pool in entities['numberpools']:
-            for number in pool:
-                if ctn == number.phone_number:
-                    ctnID = number.id
-                    poolID = pool.id
+            for number in pool['numbers']:
+                if ctn == number['phone_number']:
+                    ctnID = number['id']
+                    poolID = pool['id']
+                    break
+            if ctnID > 0:
+                break
 
     if ctnID == -1:
-        failData.append({'CTN': ctn})
+        failData.append({'CTN': ctn, 'Failure Reason': 'Number does not exist.'})
         continue
 
     if dni_type == 'static':
@@ -59,9 +62,9 @@ for index, row in inputFile.iterrows():
 
 pd.DataFrame(goodData).to_excel('GoodResults_start_' + start_time + '.xlsx', index=False)
 pd.DataFrame(failData).to_excel('FailResults_start_' + start_time + '.xlsx', index=False)
-
-for group in entities['Groups']:
-    if group.dni_type == 'None':
-        response = requests.get(groupURL + str(group.id) + '/numbers', headers=header)
-    else:
-        response = requests.get(groupURL + str(group.id) + '/numberpools', headers=header)
+#
+# for group in entities['Groups']:
+#     if group['dni_type'].lower() != 'session':
+#         response = requests.get(groupURL + str(group.id) + '/numbers', headers=header)
+#     else:
+#         response = requests.get(groupURL + str(group.id) + '/numberpools', headers=header)
