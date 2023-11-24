@@ -1,6 +1,6 @@
 from subRoutines import *
 import pandas as pd
-print('Can you see me?')
+
 start_time = str(datetime.today().strftime('%H-%M-%S'))
 args = processArguments()
 header = {'Accept': 'text/plain', 'Content-Type': 'application/json', 'x-organization-token': args['token'], 'subscription-key': args['key']}
@@ -34,18 +34,27 @@ for index, row in inputFile.iterrows():
     poolID = -1
     if dni_type == 'static':
         for number in entities['numbers']:
-            if ctn == number.phone_number:
-                ctnID = number.id
+            if ctn == number['phone_number']:
+                ctnID = number['id']
                 break
     else:
+        apple = 0
         for pool in entities['numberpools']:
-            for number in pool:
-                if ctn == number.phone_number:
-                    ctnID = number.id
-                    poolID = pool.id
+            apple += 1
+            banana = 0
+            if pool['status'].lower() == 'cancelled':
+                continue
+            for number in pool['numbers']:
+                banana += 1
+                if ctn == number['phone_number']:
+                    ctnID = number['id']
+                    poolID = pool['id']
+                    break
+            if ctnID > 0:
+                break
 
     if ctnID == -1:
-        failData.append({'CTN': ctn})
+        failData.append({'CTN': ctn, 'Failure Reason': 'Number does not exist.'})
         continue
 
     if dni_type == 'static':
@@ -57,11 +66,25 @@ for index, row in inputFile.iterrows():
     else:
         goodData.append({'CTN': ctn})
 
+# This code will cancel every Group that doesn't have any active numbers.
+for group in entities['Groups']:
+    if group['dni_type'].lower() != 'session':
+        response = requests.get(groupURL + str(group['id']) + '/numbers', headers=header)
+    else:
+        response = requests.get(groupURL + str(group['id']) + '/numberpools', headers=header)
+    if response.status_code != 200:
+        failData.append({'Group ID': group['id'], 'Group Name': group['name'], 'Failed Get': str(response.text)})
+        continue
+
+    responseText = json.loads(response.text)
+    count = 0
+    for number in responseText:
+        if number['status'].lower() == 'active':
+            count += 1
+    if count == 0:
+        response = requests.delete(groupURL + str(group['id']), headers=header)
+        if response.status_code != 200:
+            failData.append({'Group ID': group['id'], 'Group Name': group['name'], 'Failed Delete': str(response.text)})
+
 pd.DataFrame(goodData).to_excel('GoodResults_start_' + start_time + '.xlsx', index=False)
 pd.DataFrame(failData).to_excel('FailResults_start_' + start_time + '.xlsx', index=False)
-
-for group in entities['Groups']:
-    if group.dni_type == 'None':
-        response = requests.get(groupURL + str(group.id) + '/numbers', headers=header)
-    else:
-        response = requests.get(groupURL + str(group.id) + '/numberpools', headers=header)
