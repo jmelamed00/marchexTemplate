@@ -78,6 +78,7 @@ def processArguments():
     parser = argparse.ArgumentParser(description='Supply Inputs: --token, --key, (optional): --start, --end')
     parser.add_argument('--token', nargs=1)
     parser.add_argument('--key', nargs=1)
+    parser.add_argument('--delete', nargs=1, default='y')
     parser.add_argument('--start', nargs='?', default='')
     parser.add_argument('--end', nargs='?', default='')
 

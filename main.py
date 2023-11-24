@@ -38,8 +38,14 @@ for index, row in inputFile.iterrows():
                 ctnID = number['id']
                 break
     else:
+        apple = 0
         for pool in entities['numberpools']:
+            apple += 1
+            banana = 0
+            if pool['status'].lower() == 'cancelled':
+                continue
             for number in pool['numbers']:
+                banana += 1
                 if ctn == number['phone_number']:
                     ctnID = number['id']
                     poolID = pool['id']
@@ -60,11 +66,25 @@ for index, row in inputFile.iterrows():
     else:
         goodData.append({'CTN': ctn})
 
+# This code will cancel every Group that doesn't have any active numbers.
+for group in entities['Groups']:
+    if group['dni_type'].lower() != 'session':
+        response = requests.get(groupURL + str(group['id']) + '/numbers', headers=header)
+    else:
+        response = requests.get(groupURL + str(group['id']) + '/numberpools', headers=header)
+    if response.status_code != 200:
+        failData.append({'Group ID': group['id'], 'Group Name': group['name'], 'Failed Get': str(response.text)})
+        continue
+
+    responseText = json.loads(response.text)
+    count = 0
+    for number in responseText:
+        if number['status'].lower() == 'active':
+            count += 1
+    if count == 0:
+        response = requests.delete(groupURL + str(group['id']), headers=header)
+        if response.status_code != 200:
+            failData.append({'Group ID': group['id'], 'Group Name': group['name'], 'Failed Delete': str(response.text)})
+
 pd.DataFrame(goodData).to_excel('GoodResults_start_' + start_time + '.xlsx', index=False)
 pd.DataFrame(failData).to_excel('FailResults_start_' + start_time + '.xlsx', index=False)
-#
-# for group in entities['Groups']:
-#     if group['dni_type'].lower() != 'session':
-#         response = requests.get(groupURL + str(group.id) + '/numbers', headers=header)
-#     else:
-#         response = requests.get(groupURL + str(group.id) + '/numberpools', headers=header)
