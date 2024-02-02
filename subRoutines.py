@@ -20,7 +20,7 @@ class CustomThread(Thread):
 def useThreadsToCollectEntities(header):
     # Capitalization in the Endpoints list must exactly match the capitalization in the API URLs
     # Endpoints = ['Groups', 'numbers', 'numberpools', 'GroupOwners', 'GroupTypes', 'billinggroups']
-    Endpoints = ['Groups', 'numbers', 'numberpools']
+    Endpoints = ['Groups', 'numbers']
     Data = {'endpoints': Endpoints, 'threads': {}, 'entities': {}}
 
     for endpoint in Data['endpoints']:
