@@ -6,6 +6,9 @@ import argparse
 from threading import Thread
 
 
+# This class and the following method "useThreads..." are complicated and
+# beginners shouldn't try to figure them out. Just know they make the method
+# getEntities run faster.
 class CustomThread(Thread):
     def __init__(self):
         Thread.__init__(self)
@@ -16,11 +19,11 @@ class CustomThread(Thread):
     def run(self):
         self.value = collectEntities(self.header, self.endpoint)
 
+
 # Threads are only used to speed up the process of collecting multiple, large Entities.
 def useThreadsToCollectEntities(header):
     # Capitalization in the Endpoints list must exactly match the capitalization in the API URLs
-    # Endpoints = ['Groups', 'numbers', 'numberpools', 'GroupOwners', 'GroupTypes', 'billinggroups']
-    Endpoints = ['Groups', 'numbers']
+    Endpoints = ['Groups', 'numbers', 'numberpools', 'GroupOwners', 'GroupTypes', 'billinggroups']
     Data = {'endpoints': Endpoints, 'threads': {}, 'entities': {}}
 
     for endpoint in Data['endpoints']:
@@ -43,15 +46,15 @@ def collectEntities(header, url='Not Set'):
     if endpointName == 'billinggroups' or endpointName == 'GroupTypes':
         response = requests.get(url, headers=header)
         if response.status_code != 200:
-            print('Error retrieving first page for ' + endpointName + ' due to: ' + str(response.text) + '.')
-            return {}
+            print('Error retrieving ' + endpointName + ' due to: ' + str(response.text) + '.')
+            exit()
         return json.loads(response.text)
 
     # Otherwise our endpoint is paginated. Store the first page of results in our Entities to Return.
     response = requests.get(url + '?pageSize=10000', headers=header)
     if response.status_code != 200:
         print('Error retrieving first page for ' + endpointName + ' due to: ' + str(response.text) + '.')
-        return {}
+        exit()
     responseText = json.loads(response.text)
     Entities = responseText['results']
 
@@ -100,6 +103,7 @@ def processArguments():
     return arguments
 
 
+# This is an example of how to do an ME v5 Get in Python.
 def getCallDetails(callID, header):
     url = 'https://edgeapi.marchex.io/marketingedge/v5/api/calls/' + callID
 
