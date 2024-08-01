@@ -1,48 +1,35 @@
 from subRoutines import *
 import pandas as pd
-import requests
 
 start_time = str(datetime.today().strftime('%H-%M-%S'))
-
 args = processArguments()
-header = {'Authorization': 'Bearer ' + args['token'], 'content-type': 'application/json'}
+header = {'Accept': 'text/plain', 'Content-Type': 'application/json', 'x-organization-token': args['token'], 'subscription-key': args['key']}
+ga4URL = 'https://edgeapi.marchex.io/marketingedge/v5/api/IntegrationConfigurations/googleAnalytics4'
 
-# Read data from a file that lives in the same directory as this code.
-inputFile = pd.read_excel(r'eLocal1.xlsx', sheet_name='Sheet1')
-universalURL = 'https://api.mps.ai/v1/provider/mpsuniversal'
+# Collect all Marketing Edge Entities from APIs
+entities = useThreadsToCollectEntities(header)
+for key in entities:
+    if key == 'billinggroups':
+        continue
+    print(entities['billinggroups'][0]['billing_group_name'] + ' has ' + str(len(entities[key])) + ' ' + key + '.')
 
 # Setup output storage
 goodData = []
 failData = []
 
+# Before reading the file with the data to process, do $Something.
+# $Something here is collect all the GA4 Configs for this org.
+response = requests.get(ga4URL + '?pageSize=5000', headers=header)
+if response.status_code != 200:
+    print('Failed to Collect GA4 Configurations.')
+    exit(1)
+responseText = json.loads(response.text)
+ga4Ints = responseText['results']
+print('There are ' + str(len(ga4Ints)) + ' GA4 Integrations.')
+
 # Read in each row from the file.
 for index, row in inputFile.iterrows():
-    payload = {
-        'RecordingURL': row['Call Dual Channel Recording URL'],
-        'CallingNumber': row['CallingNumber'],
-        'CalledNumber': '5108675309',
-        'CallStart': row['CallStart'],
-        'CallEnd': row['CallEnd'],
-        'Duration': row['Call Duration'],
-        'CallId': row['Call SID'],
-        'Direction': 'IN',
-        'Buyer ID': row['Buyer ID '],
-        'Affiliate ID': row['Affiliate ID '],
-        'Buyer Duration Based': row['Buyer Duration Based'],
-        'Who Hung Up': row['Who Hung Up'],
-        'Verification': row['Verification'],
-        'eLocal Call DNA': row['Call Classification'],
-        'Call Value': row['Call Value'],
-        'Original Call Value': row['Original Call Value'],
-        'Call Price': row['Call Price'],
-        'Last CDRQ Status': row['Last CDRQ Status']
-    }
-    print(payload)
-    response = requests.post(universalURL, headers=header)
-    if response.status_code != 200:
-        failData.append({'Row', row['Call SID'], 'Failure', response.text})
-    else:
-        goodData.append({'Row', row['Call SID'], 'Success', 'Joel Rocks'})
+    print('Read some data from the ' + str(index) + ' row.')
 
 if len(goodData):
     pd.DataFrame(goodData).to_excel('GoodResults_start_' + start_time + '.xlsx', index=False)
