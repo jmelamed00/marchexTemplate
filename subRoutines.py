@@ -6,34 +6,31 @@ import argparse
 from threading import Thread
 
 
-class CustomThread(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-        self.value = None
-        self.header = None
-        self.endpoint = 'https://edgeapi.marchex.io/marketingedge/v5/api/'
+def processArguments():
+    arguments = {}
+    parser = argparse.ArgumentParser(description='Supply Inputs: --token, --key, (optional): --start, --end')
+    parser.add_argument('--token', nargs=1)
+    parser.add_argument('--key', nargs=1)
+    parser.add_argument('--delete', nargs=1, default='y')
+    parser.add_argument('--start', nargs='?', default='')
+    parser.add_argument('--end', nargs='?', default='')
 
-    def run(self):
-        self.value = collectEntities(self.header, self.endpoint)
+    args = parser.parse_args()
+    arguments['token'] = args.token[0]
+    arguments['key'] = args.key[0]
 
-# Threads are only used to speed up the process of collecting multiple, large Entities.
-def useThreadsToCollectEntities(header):
-    # Capitalization in the Endpoints list must exactly match the capitalization in the API URLs
-    # Endpoints = ['Groups', 'numbers', 'numberpools', 'GroupOwners', 'GroupTypes', 'billinggroups']
-    Endpoints = ['Groups', 'numbers']
-    Data = {'endpoints': Endpoints, 'threads': {}, 'entities': {}}
+    # If no value was passed for start date save De Luca's as the "early enough" start date.
+    if args.start == '':
+        arguments['start'] = datetime.strptime('2008-10-08', '%Y-%m-%d')
+    else:
+        arguments['start'] = datetime.strptime(args.start, '%Y-%m-%d')
 
-    for endpoint in Data['endpoints']:
-        Data['threads'][endpoint] = CustomThread()
-        Data['threads'][endpoint].endpoint += endpoint
-        Data['threads'][endpoint].header = header
-        Data['threads'][endpoint].start()
-
-    for endpoint in Data['endpoints']:
-        Data['threads'][endpoint].join()
-        Data['entities'][endpoint] = Data['threads'][endpoint].value
-
-    return Data['entities']
+    # If no value was passed for end date save today's date.
+    if args.end == '':
+        arguments['end'] = datetime.now()
+    else:
+        arguments['end'] = datetime.strptime(args.end, '%Y-%m-%d')
+    return arguments
 
 
 def collectEntities(header, url='Not Set'):
@@ -73,31 +70,35 @@ def collectEntities(header, url='Not Set'):
     return Entities
 
 
-def processArguments():
-    arguments = {}
-    parser = argparse.ArgumentParser(description='Supply Inputs: --token, --key, (optional): --start, --end')
-    parser.add_argument('--token', nargs=1)
-    parser.add_argument('--key', nargs=1)
-    parser.add_argument('--delete', nargs=1, default='y')
-    parser.add_argument('--start', nargs='?', default='')
-    parser.add_argument('--end', nargs='?', default='')
+class CustomThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+        self.value = None
+        self.header = None
+        self.endpoint = 'https://edgeapi.marchex.io/marketingedge/v5/api/'
 
-    args = parser.parse_args()
-    arguments['token'] = args.token[0]
-    arguments['key'] = args.key[0]
+    def run(self):
+        self.value = collectEntities(self.header, self.endpoint)
 
-    # If no value was passed for start date save De Luca's as the "early enough" start date.
-    if args.start == '':
-        arguments['start'] = datetime.strptime('2008-10-08', '%Y-%m-%d')
-    else:
-        arguments['start'] = datetime.strptime(args.start, '%Y-%m-%d')
 
-    # If no value was passed for end date save today's date.
-    if args.end == '':
-        arguments['end'] = datetime.now()
-    else:
-        arguments['end'] = datetime.strptime(args.end, '%Y-%m-%d')
-    return arguments
+# Threads are used to speed up the process of collecting multiple, large Entities.
+def useThreadsToCollectEntities(header):
+    # Capitalization in the Endpoints list must exactly match the capitalization in the API URLs
+    # Endpoints = ['Groups', 'numbers', 'numberpools', 'GroupOwners', 'GroupTypes', 'billinggroups']
+    Endpoints = ['billinggroups', 'Groups', 'numbers']
+    Data = {'endpoints': Endpoints, 'threads': {}, 'entities': {}}
+
+    for endpoint in Data['endpoints']:
+        Data['threads'][endpoint] = CustomThread()
+        Data['threads'][endpoint].endpoint += endpoint
+        Data['threads'][endpoint].header = header
+        Data['threads'][endpoint].start()
+
+    for endpoint in Data['endpoints']:
+        Data['threads'][endpoint].join()
+        Data['entities'][endpoint] = Data['threads'][endpoint].value
+
+    return Data['entities']
 
 
 def getCallDetails(callID, header):
