@@ -33,7 +33,7 @@ for index, row in inputFile.iterrows():
             group_id = group['id']
             break
     if group_id == -1:
-        failData.append({'Campaign': row['campaign name'], 'Failure': 'No matching group name.'})
+        failData.append({'Campaign': row['campaign name'], 'Failure': 'No matching group name'})
         continue
 
     # Now that we've found the group's ID, use it to update the dni_type of this group to OneToOne
