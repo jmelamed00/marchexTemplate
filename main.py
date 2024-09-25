@@ -23,7 +23,7 @@ failData = []
 
 # Read in each row from the file.
 for index, row in inputFile.iterrows():
-    print('Read some data from the ' + str(index) + ' row.')
+
 
     # This is the part of the code where you do what needs to be done for each row.
     # It could be flipping each campaign's dni_type from "OneToOne" to "Static". Or whatever.
