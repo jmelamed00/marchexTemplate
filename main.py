@@ -25,16 +25,7 @@ failData = []
 for index, row in inputFile.iterrows():
 
 
-    # This is the part of the code where you do what needs to be done for each row.
-    # It could be flipping each campaign's dni_type from "OneToOne" to "Static". Or whatever.
-    group_id = -1
-    for group in entities['Groups']:
-        if group['name'] == row['campaign name']:
-            group_id = group['id']
-            break
-    if group_id == -1:
-        failData.append({'Campaign': row['campaign name'], 'Failure': 'No matching group name'})
-        continue
+
 
     # Now that we've found the group's ID, use it to update the dni_type of this group to OneToOne
     params = {'dni_type': 'None'}
