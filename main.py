@@ -13,6 +13,7 @@ for key in entities:
         continue
     print(entities['billinggroups'][0]['billing_group_name'] + ' has ' + str(len(entities[key])) + ' ' + key + '.')
 
+print('Now with MCA!')
 
 # Read data from a file that lives in the same directory as this code.
 inputFile = pd.read_excel(r'input1.xlsx', sheet_name='Sheet1')
