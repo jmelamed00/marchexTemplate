@@ -23,7 +23,7 @@ class CustomThread(Thread):
 # Threads are only used to speed up the process of collecting multiple, large Entities.
 def useThreadsToCollectEntities(header):
     # Capitalization in the Endpoints list must exactly match the capitalization in the API URLs
-    Endpoints = ['Groups', 'numbers', 'numberpools', 'GroupOwners', 'GroupTypes', 'billinggroups']
+    Endpoints = ['billinggroups', 'Groups', 'numbers', 'numberpools', 'GroupOwners', 'GroupTypes']
     Data = {'endpoints': Endpoints, 'threads': {}, 'entities': {}}
 
     for endpoint in Data['endpoints']:
