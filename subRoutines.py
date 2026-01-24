@@ -101,6 +101,17 @@ def useThreadsToCollectEntities(header):
     return Data['entities']
 
 
+def TimeToComplete(start):
+    elapsed = datetime.today() - start
+    hours = int(elapsed.total_seconds() // 3600)
+    minutes = int((elapsed.total_seconds() % 3600) // 60)
+    minutes = '0' + str(minutes) if minutes < 10 and hours else str(minutes)
+    seconds = int(elapsed.total_seconds() % 60)
+    seconds = '0' + str(seconds) if seconds < 10 else str(seconds)
+
+    print('The script took ' + minutes + ':' + seconds + ' to complete.') if not hours else print('The script took ' + str(hours) + ':' + minutes + ':' + seconds + ' to complete.')
+
+
 def getCallDetails(callID, header):
     url = 'https://edgeapi.marchex.io/marketingedge/v5/api/calls/' + callID
 
@@ -111,3 +122,4 @@ def getCallDetails(callID, header):
     responseText = json.loads(response.text)
 
     return responseText['results']
+
