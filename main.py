@@ -1,7 +1,8 @@
 from subRoutines import *
 import pandas as pd
 
-start_time = str(datetime.today().strftime('%H-%M-%S'))
+start = datetime.today()
+start_time = str(start.strftime('%H-%M-%S'))
 args = processArguments()
 header = {'Accept': 'text/plain', 'Content-Type': 'application/json', 'x-organization-token': args['token'], 'subscription-key': args['key']}
 groupURL = 'https://edgeapi.marchex.io/marketingedge/v5/api/Groups/'
@@ -48,3 +49,5 @@ if len(goodData):
     pd.DataFrame(goodData).to_excel('GoodResults_start_' + start_time + '.xlsx', index=False)
 if len(failData):
     pd.DataFrame(failData).to_excel('FailResults_start_' + start_time + '.xlsx', index=False)
+
+TimeToComplete(start)
